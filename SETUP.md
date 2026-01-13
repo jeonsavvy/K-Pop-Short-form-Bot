@@ -71,19 +71,18 @@
 2. **"Trigger Times"** 섹션에서 원하는 시간 설정
 3. 타임존은 워크플로우 설정에서 변경 가능
 
-### Step 6: 에러 핸들링 설정 (권장)
+### Step 6: 에러 핸들링 설정 (기본 적용됨)
 
-워크플로우의 안정성을 위해 HTTP Request 노드에 재시도(Retry) 설정을 추가하는 것을 권장합니다:
+워크플로우 파일(`kpop-trend-hunter-workflow.json`)에 이미 **재시도(Retry)** 및 **타임아웃** 설정이 적용되어 있습니다. 필요시 조정하세요:
 
 1. **HTTP Request** 노드 클릭
 2. **"Options"** 섹션 확장
-3. **"Retry"** 설정:
-   - **Max Retries**: `3` (실패 시 최대 3회 재시도)
-   - **Retry On Fail**: 활성화
-4. **"Timeout"**: `30000` (30초, 밀리초 단위)
-5. **Save** 클릭
+3. **"Retry"** 설정 확인:
+   - **Max Retries**: `3` (기본값)
+   - **Retry On Fail**: 활성화됨
+4. **"Timeout"**: `30000` (30초)
 
-> **Note**: n8n 버전에 따라 설정 옵션 위치가 다를 수 있습니다. UI에서 "Retry", "Timeout", "Options" 등의 메뉴를 확인하세요.
+> **Note**: Reddit 서버가 불안정할 경우 자동으로 3번까지 재시도합니다.
 
 ### Step 7: 워크플로우 활성화
 

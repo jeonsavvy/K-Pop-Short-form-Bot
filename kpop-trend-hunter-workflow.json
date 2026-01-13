@@ -23,8 +23,18 @@
     {
       "parameters": {
         "url": "https://www.reddit.com/r/kpop/search.rss?q=challenge&restrict_sr=on&sort=new&t=week",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "KPopTrendHunter/1.0"
+            }
+          ]
+        },
         "options": {
-          "timeout": 30000
+          "timeout": 30000,
+          "retryOnFail": true,
+          "maxTries": 3
         }
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -38,7 +48,7 @@
     },
     {
       "parameters": {
-        "jsCode": "let xmlString = '';\n\nif (typeof $json.body === 'string') {\n  xmlString = $json.body;\n} else if ($json.body && typeof $json.body === 'object') {\n  xmlString = $json.body.data || $json.body.xml || JSON.stringify($json.body);\n} else if (typeof $json.data === 'string') {\n  xmlString = $json.data;\n} else if (typeof $json === 'string') {\n  xmlString = $json;\n} else {\n  xmlString = $json.xml || JSON.stringify($json);\n}\n\nconst entryRegex = /<entry[^>]*>([\\s\\S]*?)<\\/entry>/gi;\nconst entries = [];\nlet match;\n\nwhile ((match = entryRegex.exec(xmlString)) !== null) {\n  entries.push(match[1]);\n}\n\nconst posts = [];\n\nfor (let i = 0; i < entries.length; i++) {\n  const entryContent = entries[i];\n  \n  const titleMatch = entryContent.match(/<title[^>]*>(.*?)<\\/title>/is);\n  const title = titleMatch ? titleMatch[1]\n    .replace(/<!\\[CDATA\\[(.*?)\\]\\]>/gi, '$1')\n    .trim() : '';\n  \n  let link = '';\n  const linkHrefMatch = entryContent.match(/<link[^>]*href=[\"']([^\"']+)[\"'][^>]*>/i);\n  if (linkHrefMatch) {\n    link = linkHrefMatch[1].trim();\n  } else {\n    const linkContentMatch = entryContent.match(/<link[^>]*>(.*?)<\\/link>/is);\n    if (linkContentMatch) {\n      link = linkContentMatch[1]\n        .replace(/<!\\[CDATA\\[(.*?)\\]\\]>/gi, '$1')\n        .trim();\n    }\n  }\n  \n  if (title && link) {\n    posts.push({ title, link });\n  }\n}\n\nconst formattedPosts = posts.map((post, index) => {\n  return `${index + 1}. ${post.title} - ${post.link}`;\n}).join('\\n');\n\nreturn {\n  json: {\n    reddit_posts: formattedPosts\n  }\n};"
+        "jsCode": "let xmlString = '';\n\n// 1. Normalize Input\nif (typeof $json.body === 'string') {\n  xmlString = $json.body;\n} else if ($json.body && typeof $json.body === 'object') {\n  xmlString = $json.body.data || $json.body.xml || JSON.stringify($json.body);\n} else if (typeof $json.data === 'string') {\n  xmlString = $json.data;\n} else if (typeof $json === 'string') {\n  xmlString = $json;\n} else {\n  xmlString = $json.xml || JSON.stringify($json);\n}\n\n// 2. Helper to decode HTML entities\nfunction decodeHtml(html) {\n    if (!html) return '';\n    return html.replace(/&amp;/g, '&')\n               .replace(/&lt;/g, '<')\n               .replace(/&gt;/g, '>')\n               .replace(/&quot;/g, '\"')\n               .replace(/&#39;/g, \"'\");\n}\n\nconst entryRegex = /<entry[^>]*>([\\s\\S]*?)<\\/entry>/gi;\nconst entries = [];\nlet match;\n\nwhile ((match = entryRegex.exec(xmlString)) !== null) {\n  entries.push(match[1]);\n}\n\nconst posts = [];\n\nfor (let i = 0; i < entries.length; i++) {\n  const entryContent = entries[i];\n  \n  const titleMatch = entryContent.match(/<title[^>]*>(.*?)<\\/title>/is);\n  let title = titleMatch ? titleMatch[1]\n    .replace(/<!\\[CDATA\\[(.*?)\\]\\]>/gi, '$1')\n    .trim() : '';\n  title = decodeHtml(title);\n  \n  let link = '';\n  const linkHrefMatch = entryContent.match(/<link[^>]*href=[\\\"']([^\\\"']+)[\\\"'][^>]*>/i);\n  if (linkHrefMatch) {\n    link = linkHrefMatch[1].trim();\n  } else {\n    const linkContentMatch = entryContent.match(/<link[^>]*>(.*?)<\\/link>/is);\n    if (linkContentMatch) {\n      link = linkContentMatch[1]\n        .replace(/<!\\[CDATA\\[(.*?)\\]\\]>/gi, '$1')\n        .trim();\n    }\n  }\n  \n  if (title && link) {\n    posts.push({ title, link });\n  }\n}\n\nlet formattedPosts = 'No relevant K-Pop challenge posts found lately.';\nif (posts.length > 0) {\n  formattedPosts = posts.map((post, index) => {\n    return `${index + 1}. ${post.title} - ${post.link}`;\n  }).join('\\n');\n}\n\nreturn {\n  json: {\n    reddit_posts: formattedPosts\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -52,7 +62,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=# Context\n{{ $('Code in JavaScript').item.json.reddit_posts }}\n\n# Role\n너는 'K-Pop 숏폼 트렌드 뉴스레터 봇'이야.\n\n# Task\n위 데이터를 분석해서 틱톡에서 터질만한 '진짜배기 챌린지'를 엄선해줘.\n**JSON이나 코드 형식을 절대 쓰지 마.**\n사람이 읽기 좋게 **이모지와 볼드체**를 써서 깔끔한 리포트 형식으로 작성해.\n(인사말이나 사족 없이 본론만 딱 출력해)\n\n# Output Style\n🔥 **1. [노래/챌린지 제목]**\n🔗 원본: (링크 주소만)\n💡 **이유:** (왜 뜰 것 같은지 핵심만)\n📹 **가이드:** (어떻게 찍어야 하는지 한 줄 요약)\n\n---\n(다음 항목...)",
+        "text": "=# Context\n{{ $('Code in JavaScript').item.json.reddit_posts }}\n\n# Role\n너는 'K-Pop 숏폼 트렌드 뉴스레터 봇'이야.\n\n# Task\n위 데이터를 분석해서 틱톡/릴스/숏츠에서 터질만한 '바이럴 챌린지'를 엄선해.\n\n**중요:**\n1. 데이터에 챌린지 관련 내용이 없으면 \"오늘은 주목할 만한 챌린지가 없습니다.\"라고 말해.\n2. **JSON이나 코드 형식 사용 금지.**\n3. 인사말 삭제, 바로 본론 시작.\n\n# Output Format (Strict Markdown)\n🔥 **1. [노래/챌린지 제목]**\n🔗 원본: (링크)\n💡 **이유:** (바이럴 포인트/기대효과)\n📹 **가이드:** (촬영 팁/포인트)\n\n---\n(반복...)",
         "batching": {}
       },
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
@@ -186,6 +196,3 @@
   "id": "",
   "tags": []
 }
-
-
-

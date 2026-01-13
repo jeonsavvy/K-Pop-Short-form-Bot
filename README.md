@@ -13,8 +13,8 @@
 <table>
   <tr>
     <td align="center" width="50%">
-      <h3>🔹 RSS 데이터 정제</h3>
-      <p>Reddit RSS의 XML 데이터를 JavaScript로 파싱하여 제목과 링크를 추출하고, 구조화된 JSON 객체로 변환합니다.</p>
+      <h3>🔹 RSS 데이터 정제 (Enhanced)</h3>
+      <p>Reddit RSS의 XML 데이터를 정교한 Regex와 HTML Entity 디코딩으로 파싱하여 뉴스레터급 품질로 변환합니다.</p>
     </td>
     <td align="center" width="50%">
       <h3>🔹 AI 기반 트렌드 분석</h3>
@@ -23,8 +23,8 @@
   </tr>
   <tr>
     <td align="center" width="50%">
-      <h3>🔹 자동 트렌드 모니터링</h3>
-      <p>매일 지정된 시간에 Reddit r/kpop 서브레딧에서 challenge 키워드로 최신 트렌드를 자동 수집합니다.</p>
+      <h3>🔹 차단 방지 크롤링</h3>
+      <p>User-Agent 헤더 및 자동 재시도(Retry) 로직이 적용되어 Reddit의 봇 차단을 우회하고 안정적으로 데이터를 수집합니다.</p>
     </td>
     <td align="center" width="50%">
       <h3>🔹 Slack 자동 리포트</h3>
