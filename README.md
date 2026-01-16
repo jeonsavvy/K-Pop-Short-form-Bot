@@ -1,125 +1,96 @@
-## 📝 프로젝트 소개 (Executive Summary)
-
-> **"매일 아침 K-Pop 숫폼 챌린지 소재를 발굴하여 Slack으로 기획안을 자동 발송합니다."**
-
-**K-Pop Short-form Trend Hunter**은 **엔터사 직원 및 콘텐츠 기획자**를 위한 **자동화 트렌드 모니터링 시스템**입니다. **n8n 워크플로우와 Google Gemini API**를 활용하여 **숏폼 콘텐츠 소재 발굴을 위한 수동 작업**을 해결하고, 결과적으로 **매일 자동으로 바이럴 가능성 높은 K-Pop 챌린지를 선별하여 Slack으로 리포트를 전송**하는 업무 효율성을 제공합니다.
-
-* **제작:** jeonsavvy@gmail.com
-
----
-
-## ✨ 핵심 기능 (Key Features)
-
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <h3>🔹 RSS 데이터 정제 (Enhanced)</h3>
-      <p>Reddit RSS의 XML 데이터를 정교한 Regex와 HTML Entity 디코딩으로 파싱하여 뉴스레터급 품질로 변환합니다.</p>
-    </td>
-    <td align="center" width="50%">
-      <h3>🔹 AI 기반 트렌드 분석</h3>
-      <p>Google Gemini API를 활용하여 바이럴 가능성 높은 챌린지를 선별하고, Slack에 최적화된 마크다운 형식의 리포트를 생성합니다.</p>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <h3>🔹 차단 방지 크롤링</h3>
-      <p>User-Agent 헤더 및 자동 재시도(Retry) 로직이 적용되어 Reddit의 봇 차단을 우회하고 안정적으로 데이터를 수집합니다.</p>
-    </td>
-    <td align="center" width="50%">
-      <h3>🔹 Slack 자동 리포트</h3>
-      <p>마크다운 형식의 리포트를 Slack 채널에 자동 전송합니다.</p>
-    </td>
-  </tr>
-</table>
-
----
-
-## 🏗 아키텍처 및 워크플로우 (Architecture)
-
-### 🔄 데이터 흐름
-
-1. **수집 (Input):** 매일 지정된 시간에 Reddit RSS 피드(r/kpop, challenge 키워드)에서 데이터 수집
-2. **처리 (Process):** XML 파싱 후 Google Gemini API로 바이럴 가능성 높은 챌린지 선별 및 리포트 생성
-3. **결과 (Output):** 생성된 리포트를 Slack 채널로 자동 전송
+# K-Pop Short-form Trend Hunter
 
 <div align="center">
-  <img src="./assets/workflow-diagram.png" alt="n8n Workflow Diagram" width="100%"/>
-  <br><em>n8n 워크플로우 구조</em>
+  <img src="./assets/screenshots/demo.png" alt="Project Demo" width="100%" />
+  
+  <br />
+
+  <img src="https://img.shields.io/badge/n8n-Workflow-FF6584?style=flat-square&logo=n8n&logoColor=white" />
+  <img src="https://img.shields.io/badge/Google_Gemini-AI-8E75B2?style=flat-square&logo=googlegemini&logoColor=white" />
+  <img src="https://img.shields.io/badge/Slack-Bot-4A154B?style=flat-square&logo=slack&logoColor=white" />
 </div>
 
----
+<br />
 
-## 🛠 기술 스택 (Tech Stack)
-
-| 구분 | 기술 |
-| :--- | :--- |
-| **Workflow Automation** | n8n |
-| **AI / ML** | Google Gemini API |
-| **Data Source** | Reddit RSS (r/kpop) |
-| **Notification** | Slack API |
-| **Data Processing** | JavaScript |
+**K-Pop Trend Hunter**는 **n8n 워크플로우**와 **Google Gemini API**를 활용한 숏폼 트렌드 발굴 자동화 시스템입니다.
+Reddit 등 해외 커뮤니티에서 K-Pop 관련 데이터를 수집 및 정제한 후, AI가 바이럴 가능성을 분석하여 매일 아침 Slack으로 기획 리포트를 전송합니다.
 
 ---
 
-## 🚀 시작 가이드 (Getting Started)
+## 🛠 Features
 
-### 전제 조건 (Prerequisites)
-
-* **n8n 인스턴스** (Self-hosted 또는 n8n Cloud 계정)
-* **Google Gemini API Key** ([Google AI Studio](https://makersuite.google.com/app/apikey)에서 발급)
-* **Slack Webhook URL** 또는 **Slack Bot Token** (Slack App 생성 필요)
-
-### 설치 및 실행 (Installation)
-
-1. **레포지토리 클론**
-   ```bash
-   git clone https://github.com/ieonsavvy/K-Pop-Short-form-Trend-Hunter.git
-   cd K-Pop-Short-form-Trend-Hunter
-   ```
-
-2. **n8n 워크플로우 Import**
-   * n8n 대시보드에 로그인
-   * 좌측 상단의 **"Workflows"** 메뉴 클릭
-   * **"Import from File"** 버튼 클릭
-   * `kpop-trend-hunter-workflow.json` 파일 선택
-
-3. **API Key 설정**
-   * Google Gemini API Key: [Google AI Studio](https://makersuite.google.com/app/apikey)에서 발급
-   * Slack Webhook URL 또는 Bot Token: Slack App 생성 필요
-   * 자세한 설정은 [SETUP.md](./SETUP.md) 참고
-
-4. **프로젝트 실행**
-   * n8n 대시보드에서 워크플로우의 **"Active"** 토글을 켜기
-   * 첫 실행을 위해 **"Execute Workflow"** 버튼으로 테스트 실행
-   * 매일 지정된 시간(기본: 오전 9시)에 자동 실행됩니다
+*   **Enhanced RSS Parsing**: Reddit RSS(XML) 데이터를 정규식 기반으로 파싱하여 노이즈 없는 깔끔한 제목/링크 추출
+*   **AI Trend Analysis**: Gemini API를 통해 수집된 콘텐츠의 바이럴 소구점(Hook) 및 활용 방안 자동 분석
+*   **Anti-blocking Crawling**: User-Agent 로테이션 및 재시도 로직을 적용하여 Reddit의 Bot 차단 우회
+*   **Automated Reporting**: 분석된 인사이트를 마크다운 포맷으로 가공하여 Slack 채널로 자동 발송
+*   **Zero-Maintenance**: n8n 스케줄러를 통해 서버 관리 없이 완전 자동화된 데이터 파이프라인 구축
 
 ---
 
-## 📂 폴더 구조 (Directory Structure)
+## 🏗 Architecture
 
-```bash
-├── assets/                           # 이미지 및 정적 파일
-│   ├── workflow-diagram.png          # n8n 워크플로우 구조 다이어그램
-│   └── slack-demo.png                # Slack 리포트 예시 이미지
-├── kpop-trend-hunter-workflow.json   # n8n 워크플로우 설정 파일
-├── README.md                         # 프로젝트 문서
-└── SETUP.md                          # 상세 설정 가이드
+```mermaid
+graph TD
+    Source[Reddit r/kpop] -->|RSS Feed| n8n[n8n Workflow]
+    
+    subgraph "Processing Pipeline"
+        n8n -->|Parse XML| Parser[Data Cleaner]
+        Parser -->|Prompt| AI[🧠 Google Gemini]
+        AI --"Analysis JSON"--> Formatter[Markdown Builder]
+    end
+    
+    Formatter -->|Webhook| Slack[Slack Channel]
+    Slack -->|Report| User([Planner])
 ```
 
 ---
 
-## 📸 데모 (Demo)
+## 📦 Tech Stack
 
-<div align="center">
-  <img src="./assets/slack-demo.png" alt="Slack 리포트 예시" width="100%"/>
-  <br><em>Slack으로 전송되는 트렌드 리포트 예시</em>
-</div>
+| Category | Technology |
+| :--- | :--- |
+| **Orchestration** | n8n (Self-hosted / Cloud) |
+| **AI Model** | Google Gemini API (Pro) |
+| **Data Source** | Reddit RSS, External Feeds |
+| **Notification** | Slack Incoming Webhook |
+| **Scripting** | JavaScript (ES6+) |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+*   n8n Instance
+*   Google Gemini API Key
+*   Slack Webhook URL
+
+### Installation
+
+1.  **Repository Clone**
+    ```bash
+    git clone https://github.com/jeonsavvy/K-Pop-Short-form-Trend-Hunter.git
+    cd K-Pop-Short-form-Trend-Hunter
+    ```
+
+2.  **Import Workflow**
+    *   n8n 대시보드 접속 > **Workflows** > **Import from File**
+    *   `kpop-trend-hunter-workflow.json` 파일 선택
+
+3.  **Environment Setup**
+    *   **Google Gemini**: [AI Studio](https://makersuite.google.com/app/apikey)에서 키 발급 후 n8n Credential 등록
+    *   **Slack**: Webhook URL 생성 후 `Slack` 노드에 설정
+
+4.  **Run Workflow**
+    *   워크플로우 에디터 상단의 **Execute Workflow** 버튼으로 테스트
+    *   **Active** 토글을 켜서 스케줄링 활성화 (기본값: 매일 09:00)
 
 ---
 
-## 📚 문서 (Documentation)
+## 📂 Directory Structure
 
-- [SETUP.md](./SETUP.md) - 상세 설정 가이드
-
----
+```bash
+├── assets/                           # Static Assets
+├── kpop-trend-hunter-workflow.json   # Main Workflow File
+├── SETUP.md                          # Detailed Setup Guide
+└── README.md
+```
