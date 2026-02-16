@@ -1,5 +1,9 @@
 # n8n
 *.credentials.json
+.n8n/config
+.n8n/database.sqlite
+.n8n/database.sqlite-shm
+.n8n/database.sqlite-wal
 .env
 .env.local
 
