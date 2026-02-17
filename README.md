@@ -18,14 +18,14 @@ Reddit의 K-Pop 챌린지 글을 수집해서, Gemini로 요약/아이디어를 
 
 ```mermaid
 graph TD
-    A[Schedule Trigger] --> B[Build Source Items]
-    B --> C[HTTP Request: Reddit RSS]
-    C --> D[Code in JavaScript: Parse + Dedupe]
-    D --> E{Has Valid Posts?}
-    E -->|Yes| F[Basic LLM Chain]
-    G[Google Gemini Chat Model] --> F
-    F --> H[Send a message: Slack]
-    E -->|No| I[Skip Send]
+    A["Schedule Trigger"] --> B["Build Source Items"]
+    B --> C["HTTP Request: Reddit RSS"]
+    C --> D["Code in JavaScript: Parse + Dedupe"]
+    D --> E{"Has Valid Posts?"}
+    E -->|"Yes"| F["Basic LLM Chain"]
+    G["Google Gemini Chat Model"] --> F
+    F --> H["Send a message: Slack"]
+    E -->|"No"| I["Skip Send"]
 ```
 
 ---
