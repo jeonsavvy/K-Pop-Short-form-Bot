@@ -36,3 +36,9 @@ node_modules/
 
 
 
+dist
+build
+.next
+__pycache__
+venv
+.venv
