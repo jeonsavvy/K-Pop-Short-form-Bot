@@ -14,7 +14,7 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.3,
       "position": [
-        -832,
+        -960,
         0
       ],
       "id": "adc84965-7af8-4a5d-a82b-2a902e5dd15d",
@@ -22,12 +22,12 @@
     },
     {
       "parameters": {
-        "url": "https://www.reddit.com/r/kpop/search.rss?q=challenge&restrict_sr=on&sort=new&t=week",
+        "url": "={{ $json.rss_url }}",
         "headerParameters": {
           "parameters": [
             {
               "name": "User-Agent",
-              "value": "KPopTrendHunter/1.0"
+              "value": "={{ $json.user_agent }}"
             }
           ]
         },
@@ -40,7 +40,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        -576,
+        -544,
         0
       ],
       "id": "e18d563e-0d1a-42c2-bc7b-116bdd8b9157",
@@ -48,12 +48,13 @@
     },
     {
       "parameters": {
-        "jsCode": "let xmlString = '';\n\n// 1. Normalize Input\nif (typeof $json.body === 'string') {\n  xmlString = $json.body;\n} else if ($json.body && typeof $json.body === 'object') {\n  xmlString = $json.body.data || $json.body.xml || JSON.stringify($json.body);\n} else if (typeof $json.data === 'string') {\n  xmlString = $json.data;\n} else if (typeof $json === 'string') {\n  xmlString = $json;\n} else {\n  xmlString = $json.xml || JSON.stringify($json);\n}\n\n// 2. Helper to decode HTML entities\nfunction decodeHtml(html) {\n    if (!html) return '';\n    return html.replace(/&amp;/g, '&')\n               .replace(/&lt;/g, '<')\n               .replace(/&gt;/g, '>')\n               .replace(/&quot;/g, '\"')\n               .replace(/&#39;/g, \"'\");\n}\n\nconst entryRegex = /<entry[^>]*>([\\s\\S]*?)<\\/entry>/gi;\nconst entries = [];\nlet match;\n\nwhile ((match = entryRegex.exec(xmlString)) !== null) {\n  entries.push(match[1]);\n}\n\nconst posts = [];\n\nfor (let i = 0; i < entries.length; i++) {\n  const entryContent = entries[i];\n  \n  const titleMatch = entryContent.match(/<title[^>]*>(.*?)<\\/title>/is);\n  let title = titleMatch ? titleMatch[1]\n    .replace(/<!\\[CDATA\\[(.*?)\\]\\]>/gi, '$1')\n    .trim() : '';\n  title = decodeHtml(title);\n  \n  let link = '';\n  const linkHrefMatch = entryContent.match(/<link[^>]*href=[\\\"']([^\\\"']+)[\\\"'][^>]*>/i);\n  if (linkHrefMatch) {\n    link = linkHrefMatch[1].trim();\n  } else {\n    const linkContentMatch = entryContent.match(/<link[^>]*>(.*?)<\\/link>/is);\n    if (linkContentMatch) {\n      link = linkContentMatch[1]\n        .replace(/<!\\[CDATA\\[(.*?)\\]\\]>/gi, '$1')\n        .trim();\n    }\n  }\n  \n  if (title && link) {\n    posts.push({ title, link });\n  }\n}\n\nlet formattedPosts = 'No relevant K-Pop challenge posts found lately.';\nif (posts.length > 0) {\n  formattedPosts = posts.map((post, index) => {\n    return `${index + 1}. ${post.title} - ${post.link}`;\n  }).join('\\n');\n}\n\nreturn {\n  json: {\n    reddit_posts: formattedPosts\n  }\n};"
+        "jsCode": "const inputItems = $input.all();\n\nfunction getXmlString(itemJson) {\n  if (typeof itemJson?.body === 'string') return itemJson.body;\n  if (itemJson?.body && typeof itemJson.body === 'object') {\n    return itemJson.body.data || itemJson.body.xml || JSON.stringify(itemJson.body);\n  }\n  if (typeof itemJson?.data === 'string') return itemJson.data;\n  if (typeof itemJson === 'string') return itemJson;\n  return itemJson?.xml || JSON.stringify(itemJson || {});\n}\n\nfunction decodeHtml(html) {\n  if (!html) return '';\n  return String(html)\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\");\n}\n\nfunction parseEntries(xmlString, source) {\n  const entryRegex = /<entry[^>]*>([\\s\\S]*?)<\\/entry>/gi;\n  const entries = [];\n  let match;\n\n  while ((match = entryRegex.exec(xmlString)) !== null) {\n    entries.push(match[1]);\n  }\n\n  const parsed = [];\n  for (const entryContent of entries) {\n    const titleMatch = entryContent.match(/<title[^>]*>(.*?)<\\/title>/is);\n    let title = titleMatch\n      ? titleMatch[1].replace(/<!\\[CDATA\\[(.*?)\\]\\]>/gi, '$1').trim()\n      : '';\n    title = decodeHtml(title);\n\n    let link = '';\n    const linkHrefMatch = entryContent.match(/<link[^>]*href=[\\\"']([^\\\"']+)[\\\"'][^>]*>/i);\n    if (linkHrefMatch) {\n      link = linkHrefMatch[1].trim();\n    } else {\n      const linkContentMatch = entryContent.match(/<link[^>]*>(.*?)<\\/link>/is);\n      if (linkContentMatch) {\n        link = linkContentMatch[1]\n          .replace(/<!\\[CDATA\\[(.*?)\\]\\]>/gi, '$1')\n          .trim();\n      }\n    }\n\n    if (title && link) {\n      parsed.push({ title, link, source });\n    }\n  }\n\n  return parsed;\n}\n\nconst dedupe = new Map();\nfor (const item of inputItems) {\n  const source = item?.json?.source || 'unknown';\n  const xmlString = getXmlString(item?.json || {});\n  const posts = parseEntries(xmlString, source);\n\n  for (const post of posts) {\n    if (!dedupe.has(post.link)) {\n      dedupe.set(post.link, post);\n    }\n  }\n}\n\nconst uniquePosts = Array.from(dedupe.values());\nconst formattedPosts = uniquePosts.length > 0\n  ? uniquePosts.map((post, index) => `${index + 1}. [${post.source}] ${post.title} - ${post.link}`).join('\\n')\n  : 'No relevant K-Pop challenge posts found lately.';\n\nreturn [\n  {\n    json: {\n      reddit_posts: formattedPosts,\n      post_count: uniquePosts.length,\n      should_send: uniquePosts.length > 0 ? 'yes' : 'no',\n      checked_sources: inputItems.length,\n    },\n  },\n];",
+        "mode": "runOnceForAllItems"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -256,
+        -288,
         0
       ],
       "id": "b28ea42b-354d-493e-9ed2-4159ba76d5c2",
@@ -68,7 +69,7 @@
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.8,
       "position": [
-        16,
+        240,
         0
       ],
       "id": "3a00cab1-ffbc-4dec-b493-0324997c65d8",
@@ -81,7 +82,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        16,
+        240,
         208
       ],
       "id": "8f80f7d4-77dc-410f-97e6-96da5b4ffcbc",
@@ -107,7 +108,7 @@
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.4,
       "position": [
-        368,
+        560,
         0
       ],
       "id": "3fd6892e-4952-4973-9315-8e50ac58b20a",
@@ -119,11 +120,68 @@
           "name": "Slack account"
         }
       }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const userAgents = [\n  'KPopTrendHunter/1.0 (+https://n8n.io)',\n  'Mozilla/5.0 (compatible; KPopTrendHunter/1.0)',\n  'RedditTrendCollector/1.0',\n];\n\nconst targets = [\n  { subreddit: 'kpop', query: 'challenge' },\n  { subreddit: 'kpopthoughts', query: 'challenge' },\n  { subreddit: 'kpophelp', query: 'challenge' },\n];\n\nconst offset = Math.floor(Math.random() * userAgents.length);\n\nreturn targets.map((target, index) => {\n  const ua = userAgents[(offset + index) % userAgents.length];\n  const rssUrl = `https://www.reddit.com/r/${target.subreddit}/search.rss?q=${encodeURIComponent(target.query)}&restrict_sr=on&sort=new&t=week`;\n\n  return {\n    json: {\n      source: `${target.subreddit}:${target.query}`,\n      rss_url: rssUrl,\n      user_agent: ua,\n    },\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -768,
+        0
+      ],
+      "id": "7838e61d-5e8f-40e0-92a5-e83acbbb192a",
+      "name": "Build Source Items"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-send-guard",
+              "leftValue": "={{ $json.should_send || \"no\" }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -16,
+        0
+      ],
+      "id": "2a2a5474-806b-49e0-9b47-7c0b5b8020d2",
+      "name": "Has Valid Posts?"
     }
   ],
   "pinData": {},
   "connections": {
     "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build Source Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Source Items": {
       "main": [
         [
           {
@@ -145,23 +203,35 @@
         ]
       ]
     },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Has Valid Posts?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Valid Posts?": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
     "Google Gemini Chat Model": {
       "ai_languageModel": [
         [
           {
             "node": "Basic LLM Chain",
             "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Code in JavaScript": {
-      "main": [
-        [
-          {
-            "node": "Basic LLM Chain",
-            "type": "main",
             "index": 0
           }
         ]
