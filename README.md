@@ -1,6 +1,6 @@
-# K-Pop Short-form Trend Hunter
+# K-Pop Short-form Bot
 
-Reddit의 K-Pop 챌린지 글을 수집해서, Gemini로 요약/아이디어를 만들고 Slack으로 보내는 n8n 워크플로우입니다.
+케이팝숏폼봇은 Reddit의 K-Pop 챌린지 글을 수집해서, Gemini로 요약/아이디어를 만들고 Slack으로 보내는 n8n 워크플로우입니다.
 
 ---
 
@@ -47,7 +47,7 @@ graph TD
 ### 1) 워크플로우 불러오기
 
 1. n8n에서 **Import from File**
-2. `kpop-trend-hunter-workflow.json` 선택
+2. `kpop-short-form-bot-workflow.json` 선택
 
 ### 2) Credential 연결
 
@@ -81,7 +81,7 @@ graph TD
 ## 파일 구조
 
 ```bash
-├── kpop-trend-hunter-workflow.json
+├── kpop-short-form-bot-workflow.json
 ├── SETUP.md
 ├── assets/
 └── README.md
